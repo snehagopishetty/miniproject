@@ -128,7 +128,7 @@ export default function UserDashboard() {
 
     const handleCloseIssue = async (issueId) => {
         try {
-            const response = await axios.post(`http://localhost:8000/api/close-issue`, {
+            const response = await axios.post('http://localhost:8000/api/close-issue', {
                 issueId,
             });
 

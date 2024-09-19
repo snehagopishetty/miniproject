@@ -1,5 +1,41 @@
 const Issue = require('../models/issueModel');
 const User = require('../models/user');
+const nodemailer = require('nodemailer');
+require('dotenv').config();
+
+
+const transporter = nodemailer.createTransport({
+    // host:"smtp-mail.gmail.com",
+    // port:587,
+    // tls:{
+    //     ciphers:"SSLv3",
+    //     rejectUnauthorized:false,
+    // },
+    service:'gmail',
+    auth:{
+        user: process.env.EMAIL_FROM,
+        pass:process.env.APP_PASSWORD,
+    },
+    debug: true, // Enable debug output
+    logger: true,
+});
+
+const sendEmailNotification = async (email, issue) => {
+    console.log('Sending email to:', email);
+    console.log('Issue details:', issue);
+    try {
+        await transporter.sendMail({
+            from: process.env.EMAIL_FROM,
+            to: email,
+            subject: 'New Issue Submitted',
+            text: `A new issue has been submitted:\n\nIssue: ${issue.issue}\nPlease log in to your dashboard to view more details.`
+        });
+        console.log('email sent successfully');
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+};
+
 
 const issueStatus = async (req, res) => {
     const { phone } = req.query;
@@ -46,6 +82,7 @@ const closeIssue = async(req,res) => {
 const submitIssue = async (req, res) => {
     try {
         const { issue, location, name, phone } = req.body;
+        //console.log(req.body);
         if (!issue || !location || !name || !phone) {
             return res.status(400).json({ success: false, message: 'All fields are required' });
         }
@@ -60,11 +97,24 @@ const submitIssue = async (req, res) => {
             location,
             name,
             phone,
-            // status: 'pending', // Initial status
-            // acceptedBy: [],
         });
 
         await newIssue.save();
+
+        // Find all service providers within 15km
+        const serviceProviders = await User.find({serviceProvider:true});
+        //console.log(serviceProviders)
+        for (const provider of serviceProviders) {
+            const distance = getDistanceFromLatLonInKm(location.lat, location.lng, provider.lat, provider.lng);
+            // console.log("userlocation"+location);
+            // console.log("provider"+provider.location);
+            // console.log("hello");
+           //console.log(distance);
+            if (distance < 15) {
+                console.log(provider);
+                await sendEmailNotification(provider.email, newIssue);
+            }
+        }
 
         return res.status(201).json({ success: true, message: 'Issue submitted successfully' });
     } catch (error) {
