@@ -4,14 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "dev": "nodemon index.js",
-    "postinstall": "npm rebuild bcrypt --build-from-source"
+    "start": "nodemon index.js"
   },
-  "engines": {
-  "node": "18.x"
-},
-
   "author": "",
   "license": "ISC",
   "description": "",
